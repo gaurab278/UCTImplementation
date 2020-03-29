@@ -16,8 +16,8 @@ WINWARD  = 1
 LOSEWARD = -1
 
 
-START = (2, 0)
-REWARD = -0.04
+START = (2,0)
+REWARD = -0.4
 
 DETERMINISTIC = True
 
@@ -101,6 +101,7 @@ class Env:
         correctMove = random.random() 
         if self.isValid(nxtState):   
             if correctMove <= 0.8: 
+                self.state = nxtState
                 self.isEnd()
                 return nxtState, self.giveReward(), self.isTerminal
             else:  
@@ -136,6 +137,7 @@ class Env:
                 
                 
                 if self.isValid(nxtState1): 
+                    self.state = nxtState1
                     self.isEnd()
                     return nxtState1, self.giveReward(), self.isTerminal
                 else: 
@@ -186,6 +188,7 @@ class Env:
         if self.isValid(nxtState):   
             #If you have a valid next state, you reach there with 80% probability
             if correctMove <= 0.8: 
+                
                 print("Ended up in correct state taking action ", end = "")
                 if (action == 0): 
                     print("Up")
@@ -195,7 +198,7 @@ class Env:
                     print("Right")
                 elif(action == 3): 
                     print("Down")
-                    
+                self.state = nxtState
                 self.isEnd()
                 return nxtState, self.giveReward(), self.isTerminal
                 
@@ -251,12 +254,14 @@ class Env:
                 elif altAction == 3: 
                     nxtState1 = (self.state[0] + 1, self.state[1])
                 
+                
+                
                 #If alternate possibility is valid, update values
                 if self.isValid(nxtState1): 
                     print(nxtState1)
                         
                     #Update Values 
-
+                    self.state = nxtState1
                     self.isEnd()
                     return nxtState1, self.giveReward(), self.isTerminal
                 
@@ -282,6 +287,8 @@ class Env:
     def action_space(self):
         
         actions_allowed = []
+        if self.state == WIN_STATE or self.state == LOSE_STATE: 
+            return actions_allowed
         
         #Check if up is valid 
         upAction = (self.state[0] - 1, self.state[1])

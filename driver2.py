@@ -7,7 +7,7 @@ from Utils.env import Env
 def main():
     env = Env()
     env.reset()
-    random.seed(234567)
+    random.seed(67)
     #Show env state: 
     print()
     env.showBoard()
@@ -20,6 +20,7 @@ def main():
         uct.tree_policy()
         newEnvState = uct.forward()
         env = Env(newEnvState)
+        # uct.tree()
         print("Resultant Board: ")
         env.showBoard()
         print()

@@ -20,12 +20,17 @@ class Node:
         self.rollout = False
         
     def __str__(self):
-        return "{}: (action={}, visits={}, isAction = {} , reward={:d})".format(
+        
+        if self.isAction: 
+            print("Action: ", end = "")
+        else: 
+            print("State: ", end = "")
+        return "{}: (action={}, visits={}, isAction = {} , reward={:f})".format(
                                                 self.state,
                                                 self.action,
                                                 self.numVisits,
                                                 self.isAction, 
-                                                int(self.reward))
+                                                self.reward)
     
     
     
