@@ -17,7 +17,7 @@ LOSEWARD = -1
 
 
 START = (2,0)
-REWARD = -0.4
+REWARD = -0.04
 
 DETERMINISTIC = True
 
@@ -103,24 +103,20 @@ class Env:
             if correctMove <= 0.8: 
                 self.state = nxtState
                 self.isEnd()
-                return nxtState, self.giveReward(), self.isTerminal
+                return self.state, self.giveReward(), self.IsTerminal()
             else:  
                 altActions =[]
                 
                 if action == 0:
                     altActions.append(1)
                     altActions.append(2)
-                    altActions.append(3)
                 elif action == 1: 
                     altActions.append(0)
-                    altActions.append(2)
                     altActions.append(3)
                 elif action == 2: 
                     altActions.append(0)
-                    altActions.append(1)
                     altActions.append(3)
                 else: 
-                    altActions.append(0)
                     altActions.append(1)
                     altActions.append(2)
     
@@ -136,16 +132,20 @@ class Env:
                     nxtState1 = (self.state[0] + 1, self.state[1])
                 
                 
+                
+
+                
                 if self.isValid(nxtState1): 
                     self.state = nxtState1
                     self.isEnd()
-                    return nxtState1, self.giveReward(), self.isTerminal
+                    return self.state, self.giveReward(), self.IsTerminal()
                 else: 
+                    #Randomly select from the remaining two 
                     self.isEnd()
-                    return self.state, self.giveReward(), self.isTerminal
+                    return self.state, self.giveReward(), self.IsTerminal()
         else: 
                     self.isEnd()
-                    return self.state, self.giveReward(), self.isTerminal
+                    return self.state, self.giveReward(), self.IsTerminal()
                     
                     
     
@@ -227,17 +227,13 @@ class Env:
                 if action == 0:
                     altActions.append(1)
                     altActions.append(2)
-                    altActions.append(3)
                 elif action == 1: 
                     altActions.append(0)
-                    altActions.append(2)
                     altActions.append(3)
                 elif action == 2: 
                     altActions.append(0)
-                    altActions.append(1)
                     altActions.append(3)
                 else: 
-                    altActions.append(0)
                     altActions.append(1)
                     altActions.append(2)
     

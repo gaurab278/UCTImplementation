@@ -7,7 +7,7 @@ from Utils.env import Env
 def main():
     env = Env()
     env.reset()
-    random.seed(67)
+    # random.seed(67)
     #Show env state: 
     print()
     env.showBoard()
@@ -17,10 +17,10 @@ def main():
     
     while not env.IsTerminal(): 
         uct = UCT(env) 
-        uct.tree_policy()
-        newEnvState = uct.forward()
+        actionNode = uct.search() 
+        
+        newEnvState, rwrd, done  = env.debuggerstep(actionNode.GetAction())
         env = Env(newEnvState)
-        # uct.tree()
         print("Resultant Board: ")
         env.showBoard()
         print()

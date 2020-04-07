@@ -1,6 +1,7 @@
 
 import random, time
-from Utils.node import Node 
+from Utils.node import StateNode 
+from Utils.node import ActionNode
 from Utils.env import Env
 from math import sqrt, log 
 
@@ -21,13 +22,13 @@ class UCT:
         self.env = env
         self.action_space = self.env.action_space()
         state = self.env.getState()
+        # print(self.action_space)
      
-        NewNode = Node(state=state, isAct = False, actioni=None, trueAct = None,  action_space=self.action_space, parent=None, isTerminal=False)
+        NewNode = StateNode(state=state, Action_Taken= None,  action_space=self.action_space, parent=None, isTerminal=False)
         NewNode.SetRoot()
-        NewNode.SetReward(0)
+        NewNode.SetReward(NEWREWARD)
         self.root = NewNode
-        
-        
+                
     def getroot(self): 
             return self.root
         
@@ -53,11 +54,9 @@ class UCT:
         return reward + gamma * (self._rollout_(env, gamma))
     
   
-    
-  
     #Wrapper function that is called on a *STATE* node 
     def rollout(self, node): 
-        
+        # print("rollout")
         #Check if the input node is indeed a state node 
         assert node.IsAction() == False 
         
@@ -66,80 +65,28 @@ class UCT:
             env = Env(node.GetState())
             rwrd = env.giveReward() 
             node.SetReward(rwrd)
-            return node
+            return rwrd
         
         #Call the actual function 
         rwrd = self._rollout_(Env(node.GetState()), GAMMA)  
         
-        node.SetReward(rwrd)
-        
-        return node 
-    
-    
-    
-    
-    #================================================================================================ 
-    #UCB Function Calculator 
-    #================================================================================================ 
-    def compute_value (self, parent, child, exploration_constant): 
-        exploitation_term = child.GetReward() / child.GetVistCount()
-        exploration_term = exploration_constant * sqrt(2 * log(parent.GetVistCount() / child.GetVistCount()))
-        return exploitation_term + exploration_term
-    
-    
-    
-        
-    #================================================================================================ 
-    #BACKPROPAGATE
-    #================================================================================================ 
-    #Recursive BackPropagate Function 
-    def _backpropagate_(self, node, reward): 
-        # print(node)
-        #Base Case 
-        if node.IsRoot(): 
-            node.IncVistCount()
-            
-            if node.GetReward() == NEWREWARD: 
-                node.SetReward(reward)
-            else: 
-                node.IncReward(reward)
-            
-            return node 
-        
-        #Recursive Case
-        parent = node.GetParent()
-        
-        #Update on Parent 
-        parent.IncVistCount()
-        if parent.GetReward() == NEWREWARD: 
-            parent.SetReward(reward)
-        else: 
-            parent.IncReward(reward) 
-        
-        #Recurse on Parent 
-        return self._backpropagate_(parent, reward)
-    
-    def backpropagate(self, node): 
-        # print("***********************************************************")
-        return self._backpropagate_(node, node.GetReward())
-    
+        return rwrd 
+       
     
     #================================================================================================    
     #EXPAND FUNCTION 
     #================================================================================================  
     #Function to expand a current state node into possible action nodes 
     def Expand(self, node): 
-        
+        # print("Expanding")
         #First check if node is state node 
         assert node.IsAction() == False
+        actions = node.GetActionSpace() 
         
-        while(len(node.GetActionSpace())!=0): 
-            act = node.GetUntriedAction() 
-            newEnv = Env(node.GetState())
-            newActNode = Node(node.GetState(), True, act, act, newEnv.action_space(), node, False)
-    
+        for act in actions: 
+            newActNode = ActionNode(act, node)
             node.AddChild(newActNode)
-    
+            
         return node   
     
     
@@ -147,81 +94,33 @@ class UCT:
     #================================================================================================    
     #BEST CHILD CALCULATOR 
     #================================================================================================  
+    
+    def ExplorationTerm(self, state, action, expCons): 
+        return expCons * sqrt(log(state.GetVisitCount())/action.GetVisitCount())
+    
+    
     #Get the best child action from a state node
     def bestaction(self, node, expCons): 
-        
-        #Check if the function is being called on a state node 
-        assert node.IsAction() == False 
-        
+        assert node.IsState() == True 
         
         children = node.GetChildren() 
         best = children[0]
         
-        bestval = self.compute_value(node, best, expCons)
+        bestval = best.GetReward() + self.ExplorationTerm(node, best, expCons)
         
         iter_children = iter(children) 
         next(iter_children)
         
         for child in iter_children: 
-            value = self.compute_value(node, child, expCons)
+            value = child.GetReward() + self.ExplorationTerm(node, child, expCons)
             
             if value > bestval: 
                 best = child 
                 bestval = value 
         return best 
     
-    #================================================================================================  
-    #Get the best child state from taking an action  
-    def beststate(self, node, expCons): 
-        
-        #Check if the function is being called on a state node 
-        assert node.IsAction() == True
-        
-        
-        children = node.GetChildren() 
-        best = children[0]
-        
-        bestval = self.compute_value(node, best, expCons)
-        
-        iter_children = iter(children) 
-        next(iter_children)
-        
-        for child in iter_children: 
-            value = self.compute_value(node, child, expCons)
-            
-            if value > bestval: 
-                best = child 
-                bestval = value 
-        return best 
-    
-    
-    
-    
-    #================================================================================================    
-    #FORWARD FUNCTION FOR ACTUALLY MOVING 
-    #================================================================================================  
-    def forward(self): 
-        #Get Best Child Action Node 
-        best_child = self.bestaction(self.root, 0) 
-        print("****** <{}> ******".format(best_child.GetState()))
-        print()
-        
-        for child in self.root.GetChildren(): 
 
-            print("<{}> Value : {:0.4f}".format(child.GetAction(), self.compute_value(self.root, child, 0)))
-        print("******************************")
-        
-        for child in self.root.GetChildren(): 
-            print(child)
-        print("******************************")
-        
-        
-        
-        stt, reward, done = self.env.debuggerstep(best_child.GetAction())
-        return stt
-    
-    
-    
+    #####################################################################################################
     
     #================================================================================================    
     #TREE POLICY 
@@ -229,70 +128,66 @@ class UCT:
     
     
     #Helper 
-    def inChildren(self, stt, children): 
-        for child in children: 
-            cstt = child.GetState() 
-            if cstt == stt: 
-                return True
-        return False 
+    def UpdateReward(self, node, rwrd):    
+        if node.GetReward() == NEWREWARD: 
+            node.SetReward(rwrd) 
+        else: 
+            R = node.GetReward() + ((rwrd - node.GetReward())/node.GetVisitCount())
+            node.SetReward(R)
     
-  
-    def tree_policy(self): 
+    def simulate (self, stateNode, parentAction, depth): 
         
-        #Start by expanding the root of the tree 
-        node = self.root 
-        node = self.Expand(node)
+        #BASE CASE 1
+        #If reached max recursive depth, return 
+        if depth == 10: 
+            return 0 
+        #BASE CASE 2 
+        #If current state node hasn't been expanded 
+        if len(stateNode.GetChildren()) == 0: 
+            stateNode = self.Expand(stateNode)
+            return self.rollout(stateNode)
         
-        #Set up end time 
+    
+        action = self.bestaction(stateNode, EXPLORATION_CONSTANT)
+        envtemp = Env(stateNode.GetState())
+        
+        #Carry out virtual action step on environment 
+        newState, rwrd, done = envtemp.step(action.GetAction())
+        NewNode = StateNode(newState, action.GetAction(),  envtemp.action_space(), action, done)
+       
+        if done: 
+            #Need to check this for edge cases when right next to terminal to update rewards 
+            if depth == 0: 
+                if parentAction != None: 
+                    parentAction.AddChild(stateNode)
+                stateNode.IncVistCount() 
+                action.IncVistCount() 
+                self.UpdateReward(action, rwrd)
+            return rwrd 
+        
+        Reward = rwrd + GAMMA*self.simulate(NewNode, action, depth + 1)
+        if parentAction != None: 
+            parentAction.AddChild(stateNode)
+        stateNode.IncVistCount() 
+        action.IncVistCount() 
+        self.UpdateReward(action, Reward)
+        return Reward
+        
+    
+    def search(self):     
+        #Set up end Time 
         timeout = time.time() + TIME 
         
-        #While time resource hasn't ended 
+        #While the time resource hasn't ended 
         while time.time() <= timeout: 
+            self.simulate(self.root, None, 0) 
+        
+        for child in self.root.GetChildren(): 
+            print(child)
             
-            #If current node is action node
-            if node.IsAction(): 
-                #Simulate the action on parent state 
-                env = Env(node.GetState())
-                newStt, reward, done = env.step(node.GetAction())
-                # print(newStt, end = '')
-                # print(reward, end = '')
-                # print(done)
-                
-                #If resultant child state is in list of children 
-                if self.inChildren(newStt, node.GetChildren()): 
-                    #Pick best child among available children
-                    node = self.beststate(node, EXPLORATION_CONSTANT)
-                #Else 
-                else: 
-                    #Create new state node child 
-                    newNode = Node(newStt, False, node.GetAction(), node.GetAction(), env.action_space(), node, done) 
-                    
-                    if done: 
-                        newNode.SetReward(reward)
-                    else:
-                        #Call rollout on child node 
-                        newNode = self.rollout(newNode)
-                    #Set newNode to be child of action node 
-                    node.AddChild(newNode)
-                    #Back propagate from child node 
-                    node = self.backpropagate(newNode)
-            
-            #If current node is state node 
-            if not node.IsAction(): 
-                # If state node is terminal
-                if node.IsTerminal(): 
-                    #Backpropagate from node
-                    node = self.backpropagate(node)
-                    
-                #Elif state node isn't leaf
-                elif not node.IsLeaf():  
-                    #Select best action node child 
-                    node = self.bestaction(node, EXPLORATION_CONSTANT)
-                #Else: 
-                else: 
-                    #Node is leaf 
-                    #Check if node has been expanded (redundant check)
-                    #If not expanded then expand 
-                    node = self.Expand(node)
-                
-            
+        return self.bestaction(self.root, 0)
+  
+    
+  
+    
+    
