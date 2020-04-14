@@ -153,14 +153,12 @@ class ActionNode:
     def GetChildren(self): 
         return self.children 
      
-    def InChildren(self, node): 
-        state = node.GetState() 
-        
+    def InChildren(self, state): 
         for child in self.children: 
             stt = child.GetState() 
             if stt == state: 
-                return True
-        return False
+                return child
+        return None
         
     #Function to add a child to the node 
     def AddChild(self, node): 

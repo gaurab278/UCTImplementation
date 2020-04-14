@@ -135,7 +135,7 @@ class UCT:
             R = node.GetReward() + ((rwrd - node.GetReward())/node.GetVisitCount())
             node.SetReward(R)
     
-    def simulate (self, stateNode, parentAction, depth): 
+    def simulate (self, stateNode, depth): 
         
         #BASE CASE 1
         #If reached max recursive depth, return 
@@ -153,21 +153,35 @@ class UCT:
         
         #Carry out virtual action step on environment 
         newState, rwrd, done = envtemp.step(action.GetAction())
-        NewNode = StateNode(newState, action.GetAction(),  envtemp.action_space(), action, done)
        
+        child = action.InChildren(newState)
+        
+        if child == None: 
+            
+            NewNode = StateNode(newState, action.GetAction(),  envtemp.action_space(), action, done)
+            action.AddChild(NewNode) 
+        else: 
+           
+            NewNode = child 
+       
+        
+        # parentAction = stateNode.GetParent()
+        
         if done: 
             #Need to check this for edge cases when right next to terminal to update rewards 
             if depth == 0: 
-                if parentAction != None: 
-                    parentAction.AddChild(stateNode)
+                # action.AddChild(stateNode)
+                # if parentAction != None: 
+                #     parentAction.AddChild(stateNode)
                 stateNode.IncVistCount() 
                 action.IncVistCount() 
                 self.UpdateReward(action, rwrd)
             return rwrd 
         
-        Reward = rwrd + GAMMA*self.simulate(NewNode, action, depth + 1)
-        if parentAction != None: 
-            parentAction.AddChild(stateNode)
+        Reward = rwrd + GAMMA*self.simulate(NewNode, depth + 1)
+        # action.AddChild(stateNode)
+        # if parentAction != None: 
+        #     parentAction.AddChild(stateNode)
         stateNode.IncVistCount() 
         action.IncVistCount() 
         self.UpdateReward(action, Reward)
@@ -180,7 +194,7 @@ class UCT:
         
         #While the time resource hasn't ended 
         while time.time() <= timeout: 
-            self.simulate(self.root, None, 0) 
+            self.simulate(self.root, 0) 
         
         for child in self.root.GetChildren(): 
             print(child)
