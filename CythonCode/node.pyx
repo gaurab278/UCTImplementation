@@ -1,23 +1,17 @@
+"""
+Defines a node structure 
+
+@author: Gaurab Pokharel
+"""
+
+
 import random 
 cdef unsigned long long NEWREWARD = 100000000000000
 
-
 cdef class StateNode: 
     
-    cdef (int, int) state 
-    cdef int action 
-    cdef ActionNode parent 
-    cdef list children 
-    cdef list action_space 
-    cdef list untriedActions 
-    cdef int numVisits  
-    cdef double reward 
-    cdef bint root  
-    cdef bint isterminal
- 
-    
-    #Initilization
     def __init__ (self, (int, int) state, int Action_Taken, list action_space, ActionNode parent = None, bint isTerminal = False): 
+        # print(action_space)
         self.state = state  
         self.action = Action_Taken
         self.parent = parent 
@@ -29,8 +23,6 @@ cdef class StateNode:
         self.root = False 
         self.isterminal = isTerminal 
         
-        
-    #To String
     def __str__(self):
         print("State ", end = "")
         return "{}: (Parent Action={}, visits={}, reward={:f})".format(
@@ -41,80 +33,77 @@ cdef class StateNode:
     
     
     #Function that sets the current node to be the root node 
-    cpdef void SetRoot(self): 
+    cdef void SetRoot(self): 
         self.root = True
     
-    
-    #Function to check if the current node is a root
-    cpdef bint IsRoot(self): 
+    cdef bint IsRoot(self): 
         return self.root
     
     #Get the action taken to reach this state 
-    cpdef int GetParentAction(self): 
+    cdef int GetParentAction(self): 
         return self.action
     
     
     #Funtion to get the state of current node 
-    cpdef (int, int) GetState(self): 
+    cdef (int, int) GetState(self): 
         return self.state 
     
     #Function to check if the node is action node 
-    cpdef bint IsAction(self): 
+    cdef bint IsAction(self): 
         return False
     
     #Function to check if the node is state node
-    cpdef bint IsState(self): 
+    cdef bint IsState(self): 
         return True
      
     #Function to get the parent node 
-    cpdef ActionNode GetParent(self): 
+    cdef ActionNode GetParent(self): 
         return self.parent 
     
     #Function to get the children of current node 
-    def GetChildren(self): 
+    cdef list GetChildren(self): 
         return self.children 
      
     #Function to add a child to the node 
-    cpdef void AddChild(self, ActionNode node): 
+    cdef void AddChild(self, ActionNode node): 
         self.children.append(node) 
     
     #Get one action at a time that hasn't been tried yet 
-    cpdef int GetUntriedAction(self):
+    cdef int GetUntriedAction(self):
         cdef int action 
         action = random.choice(self.untriedActions)
         self.untriedActions.remove(action)
         return action
     
-    
-    def GetActionSpace(self): 
+    cdef list GetActionSpace(self): 
         return self.untriedActions
     
     
     #Function to check if the current node is terminal node 
-    cpdef bint IsTerminal(self): 
+    cdef bint IsTerminal(self): 
         return self.isterminal 
      
     #Function to increment node visit count 
-    cpdef void IncVistCount(self): 
+    cdef void IncVistCount(self): 
         self.numVisits = self.numVisits + 1 
     
-    cpdef int GetVisitCount(self): 
+    cdef int GetVisitCount(self): 
         return self.numVisits
      
     #Function to get the reward accumulated in current node 
-    cpdef double GetReward(self): 
+    cdef double GetReward(self): 
         return self.reward  
     
-    cpdef void SetReward(self, double newReward): 
+    cdef void SetReward(self, double newReward): 
         self.reward = newReward
          
     #Function to set the reward for this node 
-    cpdef void IncReward(self, double newReward): 
+    cdef void IncReward(self, double newReward): 
         self.reward = self.reward + newReward
     
 
     #Function to check if the current node is expandable 
-    cpdef bint IsExpandable(self): 
+    cdef bint IsExpandable(self): 
         if self.isterminal: 
             return False 
         if self.isAction: 
@@ -125,7 +114,7 @@ cdef class StateNode:
         return False 
     
     #Function to check if the node is a leaf node 
-    cpdef bint IsLeaf(self): 
+    cdef bint IsLeaf(self): 
         if  self.isAction == False and len(self.children) == 0: 
             return True 
         else: 
@@ -133,20 +122,16 @@ cdef class StateNode:
         
         
         
-        
-        
-cdef class ActionNode:
-    cdef int action 
-    cdef StateNode parent 
-    #Initialization
+cdef class ActionNode: 
+    
     def __init__ (self, int action, StateNode parent = None): 
+         
         self.action = action
         self.parent = parent 
         self.children = [] 
         self.numVisits = 1
         self.reward = NEWREWARD  
         
-    #To string 
     def __str__(self):
         print("Action ", end = "")
         return "{}: (Parent State={}, visits={}, reward={:f})".format(
@@ -157,29 +142,28 @@ cdef class ActionNode:
     
     
     #Function to check if the node is action node 
-    cpdef bint IsAction(self): 
+    cdef bint IsAction(self): 
         return True 
     
-    cpdef int GetAction(self): 
+    cdef int GetAction(self): 
         return self.action 
     
     #Function to check if the node is state node
-    cpdef bint IsState(self): 
+    cdef bint IsState(self): 
         return False
      
     #Function to get the parent node 
-    cpdef StateNode GetParent(self): 
+    cdef StateNode GetParent(self): 
         return self.parent 
     
     #Function to get the children of current node 
-    def GetChildren(self): 
+    cdef list GetChildren(self): 
         return self.children 
      
-        
-    #HAVEN'T CONVERTED THIS TO CYTHON, type error on state 
-    def InChildren(self, state): 
-        cdef (int, int) stt 
+    cdef StateNode InChildren(self, (int, int) state): 
         cdef StateNode child 
+        cdef (int, int) stt 
+        
         for child in self.children: 
             stt = child.GetState() 
             if stt == state: 
@@ -187,12 +171,12 @@ cdef class ActionNode:
         return None
         
     #Function to add a child to the node 
-    cpdef void AddChild(self, StateNode node): 
+    cdef void AddChild(self, StateNode node): 
         if len(self.children) == 0: 
             self.children.append(node) 
             return
         
-        cdef (int, int) newstt, cstt
+        cdef (int, int) newstt, cstt 
         cdef bint present 
         cdef StateNode child 
         
@@ -209,19 +193,28 @@ cdef class ActionNode:
        
      
     #Function to increment node visit count 
-    cpdef void IncVistCount(self): 
+    cdef void IncVistCount(self): 
         self.numVisits = self.numVisits + 1 
     
-    cpdef int GetVisitCount(self): 
+    cdef int GetVisitCount(self): 
         return self.numVisits
      
     #Function to get the reward accumulated in current node 
-    cpdef double GetReward(self): 
+    cdef double GetReward(self): 
         return self.reward  
     
-    cpdef void SetReward(self, double newReward): 
+    cdef void SetReward(self, double newReward): 
         self.reward = newReward
          
     #Function to set the reward for this node 
-    cpdef void IncReward(self, double newReward): 
-        self.reward = self.reward + newReward    
+    cdef void IncReward(self, double newReward): 
+        self.reward = self.reward + newReward
+    
+    
+    
+        
+        
+
+    
+    
+        

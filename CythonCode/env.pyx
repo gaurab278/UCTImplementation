@@ -1,47 +1,47 @@
-import numpy as np 
-cimport numpy as np
-import random
 
-#Global Variables
+"""
+Defines the domain on which the agent works 
+
+@Author: Gaurab Pokharel  
+
+"""
+import numpy as np 
+cimport numpy as np 
+cimport cython  
+import random 
+
+
+#Some Global Static Variables 
+cdef double WINWARD = 1.00  
+cdef double LOSEWARD = -1.00 
+cdef (int, int) START = (2,0)
+cdef double REWARD = -0.04
 cdef int BOARD_ROWS = 3
 cdef int BOARD_COLS = 4
-
 cdef (int, int) WIN_STATE = (0, 3)
 cdef (int, int) LOSE_STATE = (1, 3)
 
-# WIN_STATE = (1, 3)
-# LOSE_STATE = (0, 3)
 
 
-cdef double WINWARD  = 1.00
-cdef double LOSEWARD = -1.00
-
-
-cdef (int, int) START = (2,0)
-cdef double REWARD = -0.04
-
-
-
-#The environment Class 
 cdef class Env: 
     
-    
-    #Initialization function 
+    #Initialize 
     def __init__(self, (int, int) state=START):
-        self.board = np.zeros([BOARD_ROWS, BOARD_COLS])
+        self.board = np.zeros((BOARD_ROWS, BOARD_COLS), dtype=np.int32)
+        
         self.board[1, 1] = -1
         self.state = state
         self.isTerminal = False
         
+        
+    #Reset Game State to START
+    cdef bint reset(self): 
+        self.state = START
+        return True
     
-    #Reset game state to START 
-    cpdef bint reset(self): 
-        self.state = START 
-        return True 
     
-    
-    #Give reward to the current state 
-    cpdef double giveReward(self):
+    #Reward the current state of the environment 
+    cdef double giveReward(self):
         if self.state == WIN_STATE:
             return WINWARD
         elif self.state == LOSE_STATE:
@@ -49,35 +49,26 @@ cdef class Env:
         else:
             return REWARD
         
-    
-    #Check to see if the current state of environment is terminal 
-    cdef void isEnd(self): 
+       
+    #Check if the environment is in the terminal state     
+    cdef void isEnd(self):
         if (self.state == WIN_STATE) or (self.state == LOSE_STATE):
             self.isTerminal = True
         else: 
             self.isTerminal = False 
     
     
-    #Get return on whether or not the env is terminal
-    cpdef bint IsTerminal(self): 
+    #Return whether or not the environment is terminal 
+    cdef bint IsTerminal(self): 
         self.isEnd()
-        return self.isTerminal
+        return self.isTerminal    
     
-    
-    
-    #Main valid action checker function, Used by multiple procedures
-    #Not called outside class
-    cdef bint isValid(self, (int, int) nxtState): 
-       if (nxtState[0] >= 0) and (nxtState[0] <= 2):
-               if (nxtState[1] >= 0) and (nxtState[1] <= 3):
-                   if nxtState != (1, 1):
-                       return True
-       return False
-    
-    
+        
     #Function to check if the next action is valid or not
-    #Called outside of class
-    cpdef bint isValidAction(self, (int, int) state, int action): 
+    cdef bint isValidAction(self, (int, int) state, int action): 
+        
+        cdef  (int, int) nxtState
+        
         if action == 0:
             nxtState = (state[0] - 1, state[1])
         elif action == 1:
@@ -95,18 +86,30 @@ cdef class Env:
             return False
         
         
-    #Get the current state of the environment 
-    #Called outside of class
-    cpdef (int, int) getState(self): 
-        return self.state
-        
+    #Check to see if a state is valid 
+    cdef bint isValid(self, (int, int) nxtState): 
+       if (nxtState[0] >= 0) and (nxtState[0] <= 2):
+               if (nxtState[1] >= 0) and (nxtState[1] <= 3):
+                   if nxtState != (1, 1):
+                       return True
+       return False
+   
     
-    #Main stepping function for the environment 
-    cpdef ((int, int), double, bint) step(self, int action): 
-        cpdef double correctMove 
-        cpdef (int, int) nxtState, nxtState1
-        cpdef list altActions
+    #Get the state of the environment 
+    cdef (int, int) getState(self): 
+        return self.state 
+       
         
+       
+    #Carry out a step in environment 
+    cdef ((int, int), double, bint) step(self, int action):
+
+        cdef (int, int) nxtState        
+        cdef list altActions = list() 
+        cdef int altAction 
+        cdef (int, int) nxtState1 
+        cdef double correctMove 
+         
         if action == 0:
             nxtState = (self.state[0] - 1, self.state[1])
         elif action == 1:
@@ -116,7 +119,7 @@ cdef class Env:
         elif action == 3: 
             nxtState = (self.state[0] + 1, self.state[1])
 
-                
+       
         correctMove = random.random() 
         if self.isValid(nxtState):   
             if correctMove <= 0.8: 
@@ -124,7 +127,8 @@ cdef class Env:
                 self.isEnd()
                 return self.state, self.giveReward(), self.IsTerminal()
             else:  
-                altActions =[]
+                
+                
                 
                 if action == 0:
                     altActions.append(1)
@@ -139,8 +143,10 @@ cdef class Env:
                     altActions.append(1)
                     altActions.append(2)
     
+                
                 altAction = random.choice(altActions)
-               
+                 
+                
                 if altAction == 0:
                     nxtState1 = (self.state[0] - 1, self.state[1])
                 elif altAction == 1:
@@ -149,7 +155,6 @@ cdef class Env:
                     nxtState1 = (self.state[0], self.state[1] + 1) 
                 elif altAction == 3: 
                     nxtState1 = (self.state[0] + 1, self.state[1])
-                
                 
                 if self.isValid(nxtState1): 
                     self.state = nxtState1
@@ -162,19 +167,18 @@ cdef class Env:
         else: 
                     self.isEnd()
                     return self.state, self.giveReward(), self.IsTerminal()
-        
-        
-        
-        
-        
-        
-    #THIS IS THE SAME AS STEP but this shows debugging steps, MAINLY USED IN INTERFACING                
-    cpdef ((int, int), double, bint) debuggerstep(self, int action):
-        cpdef double correctMove 
-        cpdef (int, int) nxtState, nxtState1
-        cpdef list altActions
+                    
+                    
+    
 
-        
+    #THIS IS THE SAME AS STEP but this shows debugging steps, MAINLY USED IN INTERFACING                
+    cdef ((int, int), double, bint) debuggerstep(self, int action):
+
+        cdef (int, int) nxtState        
+        cdef list altActions = list() 
+        cdef int altAction 
+        cdef (int, int) nxtState1 
+        cdef double correctMove        
         """
         -------------
         0 | 1 | 2| 3|
@@ -187,8 +191,6 @@ cdef class Env:
         down = 3
         """
 
-
-
         #Calculate actual Next State you are supposed to reach via action
         if action == 0:
             nxtState = (self.state[0] - 1, self.state[1])
@@ -198,10 +200,10 @@ cdef class Env:
             nxtState = (self.state[0], self.state[1] + 1) 
         elif action == 3: 
             nxtState = (self.state[0] + 1, self.state[1])
-
-                
+            
         #BUT YOU CAN ONLY REACH THERE WITH 80% PROBABIBILITY
         #Stocasticity Implementation
+        
         correctMove = random.random() 
         
         #Check if nextState to reach is valid, Redundant Check (Might have to remove in future iterations)
@@ -242,7 +244,6 @@ cdef class Env:
                 
                
                 #Find remaining states that can be possibly reached: 
-                altActions =[]
                 
                 if action == 0:
                     altActions.append(1)
@@ -260,6 +261,7 @@ cdef class Env:
                 
                 #Pick one random of all possible next states
                 altAction = random.choice(altActions)
+                
                 #Check if alternate possibility is valid 
                 if altAction == 0:
                     nxtState1 = (self.state[0] - 1, self.state[1])
@@ -294,24 +296,23 @@ cdef class Env:
                     print("Invalid action picked, Stayed in Place!")
                     self.isEnd()
                     return self.state, self.giveReward(), self.isTerminal
-                
-                
-                
+                    
+                    
     #Get a list of possible actions that can be conducted at current state
-    def action_space(self):
-        
-        actions_allowed = []
+    cdef list action_space(self):
+        cdef list actions_allowed = []
         if self.state == WIN_STATE or self.state == LOSE_STATE: 
             return actions_allowed
         
+        
+        cdef (int, int) nxtState
+        
         #Check if up is valid 
-        upAction = (self.state[0] - 1, self.state[1])
-        if self.isValid(upAction): 
+        if self.isValid(nxtState =(self.state[0] - 1, self.state[1])): 
             actions_allowed.append(0)
             
         #Check if down is valid 
-        downAction = (self.state[0] + 1, self.state[1])
-        if self.isValid(downAction): 
+        if self.isValid(nxtState = (self.state[0] + 1, self.state[1])): 
             actions_allowed.append(3)
             
         #Check if left is valid 
@@ -322,15 +323,16 @@ cdef class Env:
         if self.isValid (nxtState =(self.state[0], self.state[1] + 1)): 
             actions_allowed.append(2)
             
-
         return actions_allowed
     
     
-    
     #Function to print out the current board
-    cpdef void showBoard(self):
-        cpdef int i = 0
-        self.board[self.state] = 1
+    cdef void showBoard(self):
+        cdef int i, j
+        
+        cdef temp1 = self.state[0] 
+        cdef temp2 = self.state[1] 
+        self.board[temp1, temp2] = 1
         for i in range(0, BOARD_ROWS):
             print('-----------------')
             out = '| '
@@ -344,5 +346,4 @@ cdef class Env:
                 out += token + ' | '
             print(out)
         print('-----------------')
-        
-   
+      
