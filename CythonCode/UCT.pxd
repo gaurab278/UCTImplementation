@@ -6,9 +6,9 @@ Defines the Main UCT function
 
 
 import random, time
-from env import Env 
-from node import StateNode 
-from node import ActionNode
+# from env import Env 
+# from node import StateNode 
+# from node import ActionNode
 from math import sqrt, log 
 
 
@@ -17,6 +17,7 @@ from math import sqrt, log
 from node cimport StateNode 
 from node cimport ActionNode
 from env cimport Env
+
 
 cdef double GAMMA = 0.90
 cdef double EXPLORATION_CONSTANT =sqrt(2)
@@ -38,12 +39,12 @@ cdef class UCT:
     #Functions 
     cdef list MakeActionSpace(self, Env env)
     cdef StateNode makeroot(self, Env env)
-    # cdef StateNode getroot(self)
-    # cdef double _rollout_(self,Env env, double gamma)
-    # cdef double rollout(self, StateNode node)
-    # cdef StateNode Expand(self, StateNode node)
-    # cdef double ExplorationTerm(self, (int, int) state, int action, double expCons)
-    # cdef ActionNode bestaction(self, StateNode node, double expCons)
-    # cdef void UpdateReward(self, ActionNode node, double rwrd)
-    # cdef double simulate (self, StateNode stateNode, int depth)
-    # cdef ActionNode search(self)
+    cdef StateNode getroot(self)
+    cdef double _rollout_(self,Env env, double gamma)
+    cdef double rollout(self, StateNode node)
+    cdef StateNode Expand(self, StateNode node)
+    cdef double ExplorationTerm(self, StateNode state, ActionNode action, double expCons)
+    cdef ActionNode bestaction(self, StateNode node, double expCons)
+    cdef void UpdateReward(self, ActionNode node, double rwrd)
+    cdef double simulate (self, StateNode stateNode, int depth)
+    cpdef ActionNode search(self)

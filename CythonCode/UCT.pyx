@@ -6,15 +6,16 @@ Defines the Main UCT function
 
 
 import random, time
-from env import Env 
-from node import StateNode 
-from node import ActionNode
+# from env import Env 
+# from node import StateNode 
+# from node import ActionNode
 from math import sqrt, log 
 
 
 from node cimport StateNode 
 from node cimport ActionNode
 from env cimport Env
+
 
 cdef double GAMMA = 0.90
 cdef double EXPLORATION_CONSTANT = sqrt(2)
@@ -33,131 +34,130 @@ cdef class UCT:
 
 
     cdef list MakeActionSpace(self, Env env): 
-        return env.action_space()
+        cdef list temp = self.env.actionspace() 
+        return temp 
     
     
     cdef StateNode makeroot(self, Env env): 
         cdef (int, int) state
         cdef StateNode NewNode 
-        state = env.getState() 
-        NewNode = StateNode(state=state, Action_Taken= None,  action_space=self.action_space, parent=None, isTerminal=False)
+        # state = env.getState() 
+        NewNode = StateNode(env.getState(), 999, self.action_space, None, False)
         NewNode.SetRoot()
         NewNode.SetReward(NEWREWARD)
         return NewNode
         
+    cdef StateNode getroot(self): 
+        return self.root
         
         
         
         
-        
-    # cdef StateNode getroot(self): 
-    #     return self.root
-        
-        
-        
-        
-    # #================================================================================================    
-    # #ROLLOUT FUNCTION 
-    # #================================================================================================    
-    # #Actual recursive function called by the wrapper function 
+    #================================================================================================    
+    #ROLLOUT FUNCTION 
+    #================================================================================================    
+    #Actual recursive function called by the wrapper function 
     
-    # cdef double _rollout_(self, Env envI, double gamma): 
-    #     cdef int action 
-    #     cdef (int, int) nxtState
-    #     cdef double reward 
-    #     cdef bint nxtDone
-    #     cdef Env env = envI
+    cdef double _rollout_(self, Env envI, double gamma): 
+        cdef int action 
+        # cdef (int, int) nxtState
+        cdef double reward 
+        cdef bint nxtDone
+        cdef Env env = envI
         
-    #     #Base case
-    #     if env.IsTerminal(): 
-    #         return gamma * env.giveReward()
+        #Base case
+        if env.IsTerminal(): 
+            return gamma * env.giveReward()
         
-    #     #Else find list of possible actions 
-    #     action = random.choice(env.action_space())
+        #Else find list of possible actions 
+        action = random.choice(env.actionspace())
         
-    #     #Simulate action on environment 
-    #     nxtState, reward, nxtDone = env.step(action)
+        #Simulate action on environment 
+        env.step(action)
+        # nxtState = env.getState() 
+        reward = env.giveReward() 
+        nxtDone = env.IsTerminal() 
         
-    #     return reward + (gamma * (self._rollout_(env, gamma)))
+        return reward + (gamma * (self._rollout_(env, gamma)))
     
   
-    # #Wrapper function that is called on a *STATE* node 
-    # cdef double rollout(self, StateNode node): 
-    #     # print("rollout")
-    #     #Check if the input node is indeed a state node 
-    #     assert node.IsAction() == False 
+    #Wrapper function that is called on a *STATE* node 
+    cdef double rollout(self, StateNode node): 
+        # print("rollout")
+        #Check if the input node is indeed a state node 
+        assert node.IsAction() == False 
         
-    #     cdef Env env 
-    #     cdef double rwrd  
+        cdef Env env 
+        cdef double rwrd  
         
-    #     #Can't rollout on terminal state 
-    #     if node.IsTerminal(): 
-    #         env = Env(node.GetState())
-    #         rwrd = env.giveReward() 
-    #         node.SetReward(rwrd)
-    #         return rwrd
+        #Can't rollout on terminal state 
+        if node.IsTerminal(): 
+            env = Env(node.GetState())
+            rwrd = env.giveReward() 
+            node.SetReward(rwrd)
+            return rwrd
         
-    #     #Call the actual function 
-    #     rwrd = self._rollout_(Env(node.GetState()), GAMMA)  
+        #Call the actual function 
+        rwrd = self._rollout_(Env(node.GetState()), GAMMA)  
         
-    #     return rwrd 
+        return rwrd 
        
     
-    # #================================================================================================    
-    # #EXPAND FUNCTION 
-    # #================================================================================================  
-    # #Function to expand a current state node into possible action nodes 
-    # cdef StateNode Expand(self, StateNode node): 
-    #     # print("Expanding")
-    #     #First check if node is state node 
-    #     assert node.IsAction() == False
+    #================================================================================================    
+    #EXPAND FUNCTION 
+    #================================================================================================  
+    #Function to expand a current state node into possible action nodes 
+    cdef StateNode Expand(self, StateNode node): 
+        # print("Expanding")
+        #First check if node is state node 
+        assert node.IsAction() == False
         
-    #     cdef list actions 
-    #     actions = node.GetActionSpace() 
+        cdef list actions 
+        actions = node.GetActionSpace() 
         
-    #     cdef int act 
-    #     #cdef ActionNode newActNode 
+        cdef int act 
+        #cdef ActionNode newActNode 
         
-    #     for act in actions: 
-    #         newActNode = ActionNode(act, node)
-    #         node.AddChild(newActNode)
+        for act in actions: 
+            newActNode = ActionNode(act, node)
+            node.AddChild(newActNode)
             
-    #     return node   
+        return node   
     
     
     
-    # #================================================================================================    
-    # #BEST CHILD CALCULATOR 
-    # #================================================================================================  
+    #================================================================================================    
+    #BEST CHILD CALCULATOR 
+    #================================================================================================  
     
-    # cdef double ExplorationTerm(self, (int, int) state, int action, double expCons): 
-    #     return expCons * sqrt(log(state.GetVisitCount())/action.GetVisitCount())
+    cdef double ExplorationTerm(self, StateNode state, ActionNode action, double expCons): 
+        return expCons * sqrt(log(state.GetVisitCount())/action.GetVisitCount())
     
     
-    # #Get the best child action from a state node
-    # cdef ActionNode bestaction(self, StateNode node, double expCons): 
-    #     assert node.IsState() == True 
+    #Get the best child action from a state node
+    cdef ActionNode bestaction(self, StateNode node, double expCons): 
+        assert node.IsState() == True 
         
-    #     cdef list children  
-    #     cdef ActionNode best, child  
-    #     cdef double bestval, value  
+        cdef list children  
+        cdef ActionNode best, child  
+        cdef double bestval, value  
  
         
-    #     children = node.GetChildren() 
-    #     best = children[0]
+        children = node.GetChildren() 
+        best = children[0]
         
-    #     bestval = best.GetReward() + self.ExplorationTerm(node, best, expCons)
+        bestval = best.GetReward() + self.ExplorationTerm(node, best, expCons)
         
-    #     iter_children = iter(children) 
-    #     next(iter_children)
+        iter_children = iter(children) 
+        next(iter_children)
         
-    #     for child in iter_children: 
-    #         value = child.GetReward() + self.ExplorationTerm(node, child, expCons)
+        for child in iter_children: 
+            value = child.GetReward() + self.ExplorationTerm(node, child, expCons)
             
-    #         if value > bestval: 
-    #             best = child 
-    #             bestval = value 
-    #     return best 
+            if value > bestval: 
+                best = child 
+                bestval = value 
+        return best 
     
 
     # #####################################################################################################
@@ -167,82 +167,83 @@ cdef class UCT:
     # #================================================================================================  
     
     
-    # #Helper 
-    # cdef void UpdateReward(self, ActionNode node, double rwrd):  
-    #     cdef double R 
+    #Helper 
+    cdef void UpdateReward(self, ActionNode node, double rwrd):  
+        cdef double R 
         
-    #     if node.GetReward() == NEWREWARD: 
-    #         node.SetReward(rwrd) 
-    #     else: 
-    #         R = node.GetReward() + ((rwrd - node.GetReward())/node.GetVisitCount())
-    #         node.SetReward(R)
+        if node.GetReward() == NEWREWARD: 
+            node.SetReward(rwrd) 
+        else: 
+            R = node.GetReward() + ((rwrd - node.GetReward())/node.GetVisitCount())
+            node.SetReward(R)
     
-    # cdef double simulate (self, StateNode stateNode, int depth): 
+   
+    cdef double simulate (self, StateNode stateNode, int depth): 
         
-    #     cdef ActionNode action 
-    #     cdef Env envtemp
-    #     cdef (int, int) newState
-    #     cdef double rwrd, Reward 
-    #     cdef bint done 
-    #     cdef StateNode child, NewNode
+        #BASE CASE 1
+        #If reached max recursive depth, return 
+        if depth == 10: 
+            return 0 
+        #BASE CASE 2 
+        #If current state node hasn't been expanded 
+        if len(stateNode.GetChildren()) == 0: 
+            stateNode = self.Expand(stateNode)
+            return self.rollout(stateNode)
         
-    #     #BASE CASE 1
-    #     #If reached max recursive depth, return 
-    #     if depth == 10: 
-    #         return 0 
+        cdef StateNode child, NewNode 
+        cdef ActionNode action 
+        cdef Env envtemp 
+        cdef double rwrd, Reward  
+        cdef bint done 
         
-    #     #BASE CASE 2 
-    #     cdef StateNode tempnode 
-    #     #If current state node hasn't been expanded 
-    #     if len(stateNode.GetChildren()) == 0: 
-    #         tempnode = self.Expand(stateNode)
-    #         return self.rollout(tempnode)
+        action = self.bestaction(stateNode, EXPLORATION_CONSTANT)
+        envtemp = Env(stateNode.GetState())
         
-        
-    #     action = self.bestaction(stateNode, EXPLORATION_CONSTANT)
-    #     envtemp = Env(stateNode.GetState())
-        
-    #     #Carry out virtual action step on environment 
-    #     newState, rwrd, done = envtemp.step(action.GetAction())
+        #Carry out virtual action step on environment 
+        envtemp.step(action.GetAction())
+        rwrd = envtemp.giveReward() 
+        done = envtemp.IsTerminal() 
        
-    #     child = action.InChildren(newState)
+        child = action.InChildren(envtemp.getState() )
         
-    #     if child == None: 
-    #         NewNode = StateNode(newState, action.GetAction(),  envtemp.action_space(), action, done)
-    #         action.AddChild(NewNode) 
-    #     else: 
-    #         NewNode = child 
-       
-    #     if done: 
-    #         #Need to check this for edge cases when right next to terminal to update rewards 
-    #         if depth == 0: 
-    #             stateNode.IncVistCount() 
-    #             action.IncVistCount() 
-    #             self.UpdateReward(action, rwrd)
-    #         return rwrd 
-        
-    #     Reward = rwrd + GAMMA*self.simulate(NewNode, depth + 1)
-    #     stateNode.IncVistCount() 
-    #     action.IncVistCount() 
-    #     self.UpdateReward(action, Reward)
-    #     return Reward
-        
-    
-    # cdef ActionNode search(self):     
-    #     #Set up end Time 
-    #     cdef double timeout 
-    #     cdef ActionNode child 
-        
-    #     timeout = time.time() + TIME 
-        
-    #     #While the time resource hasn't ended 
-    #     while time.time() <= timeout: 
-    #         self.simulate(self.root, 0) 
-        
-    #     for child in self.root.GetChildren(): 
-    #         print(child)
+        if child == None: 
             
-    #     return self.bestaction(self.root, 0)
+            NewNode = StateNode(envtemp.getState(), action.GetAction(),  envtemp.actionspace(), action, done)
+            action.AddChild(NewNode) 
+        else: 
+           
+            NewNode = child 
+       
+        if done: 
+            #Need to check this for edge cases when right next to terminal to update rewards 
+            if depth == 0: 
+                stateNode.IncVistCount() 
+                action.IncVistCount() 
+                self.UpdateReward(action, rwrd)
+            return rwrd 
+        
+        Reward = rwrd + GAMMA*self.simulate(NewNode, depth + 1)
+        stateNode.IncVistCount() 
+        action.IncVistCount() 
+        self.UpdateReward(action, Reward)
+        return Reward
+           
+    
+    cpdef ActionNode search(self):     
+        #Set up end Time 
+        cdef double timeout 
+        cdef ActionNode child 
+        
+        timeout = time.time() + TIME 
+        
+        #While the time resource hasn't ended 
+        while time.time() <= timeout: 
+            self.simulate(self.root, 0) 
+        
+        for child in self.root.GetChildren(): 
+            print(child)
+            
+        return self.bestaction(self.root, 0)
   
     
   

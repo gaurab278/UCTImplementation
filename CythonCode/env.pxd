@@ -22,24 +22,25 @@ cdef (int, int) WIN_STATE = (0, 3)
 cdef (int, int) LOSE_STATE = (1, 3)
 
 
-cdef class Env: 
+cdef class Env(): 
     #Attributes 
     cdef np.int32_t[:, :] board 
     # cdef np.ndarray[np.int32_t, ndim=2] board
     cdef (int, int) state 
     cdef bint isTerminal
+    
 
     
     
     #Functions
-    cdef bint reset(self)
+    cpdef void reset(self)
     cdef double giveReward(self)
     cdef void isEnd(self)
-    cdef bint IsTerminal(self)
+    cpdef bint IsTerminal(self)
     cdef bint isValidAction(self, (int, int) state, int action)
     cdef bint isValid(self, (int, int) nxtState)
-    cdef (int, int) getState(self)
-    cdef ((int, int), double, bint) step(self, int action)
-    cdef ((int, int), double, bint) debuggerstep(self, int action)
-    cdef list action_space(self)
-    cdef void showBoard(self)
+    cpdef (int, int) getState(self)
+    cdef void step(self, int action)
+    cpdef void debuggerstep(self, int action)
+    cdef list actionspace(self)
+    cpdef void showBoard(self)

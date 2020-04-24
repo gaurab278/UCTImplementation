@@ -23,21 +23,21 @@ cdef (int, int) LOSE_STATE = (1, 3)
 
 
 
-cdef class Env: 
+cdef class Env(): 
     
     #Initialize 
     def __init__(self, (int, int) state=START):
         self.board = np.zeros((BOARD_ROWS, BOARD_COLS), dtype=np.int32)
-        
         self.board[1, 1] = -1
         self.state = state
         self.isTerminal = False
         
         
+        
     #Reset Game State to START
-    cdef bint reset(self): 
+    cpdef void reset(self): 
         self.state = START
-        return True
+        
     
     
     #Reward the current state of the environment 
@@ -59,7 +59,7 @@ cdef class Env:
     
     
     #Return whether or not the environment is terminal 
-    cdef bint IsTerminal(self): 
+    cpdef bint IsTerminal(self): 
         self.isEnd()
         return self.isTerminal    
     
@@ -96,13 +96,13 @@ cdef class Env:
    
     
     #Get the state of the environment 
-    cdef (int, int) getState(self): 
+    cpdef (int, int) getState(self): 
         return self.state 
        
         
        
     #Carry out a step in environment 
-    cdef ((int, int), double, bint) step(self, int action):
+    cdef void step(self, int action):
 
         cdef (int, int) nxtState        
         cdef list altActions = list() 
@@ -125,7 +125,7 @@ cdef class Env:
             if correctMove <= 0.8: 
                 self.state = nxtState
                 self.isEnd()
-                return self.state, self.giveReward(), self.IsTerminal()
+                # return self.state, self.giveReward(), self.IsTerminal()
             else:  
                 
                 
@@ -159,20 +159,20 @@ cdef class Env:
                 if self.isValid(nxtState1): 
                     self.state = nxtState1
                     self.isEnd()
-                    return self.state, self.giveReward(), self.IsTerminal()
+                    # return self.state, self.giveReward(), self.IsTerminal()
                 else: 
                     #Randomly select from the remaining two 
                     self.isEnd()
-                    return self.state, self.giveReward(), self.IsTerminal()
+                    # return self.state, self.giveReward(), self.IsTerminal()
         else: 
                     self.isEnd()
-                    return self.state, self.giveReward(), self.IsTerminal()
+                    # return self.state, self.giveReward(), self.IsTerminal()
                     
                     
     
 
     #THIS IS THE SAME AS STEP but this shows debugging steps, MAINLY USED IN INTERFACING                
-    cdef ((int, int), double, bint) debuggerstep(self, int action):
+    cpdef void debuggerstep(self, int action):
 
         cdef (int, int) nxtState        
         cdef list altActions = list() 
@@ -222,7 +222,7 @@ cdef class Env:
                     print("Down")
                 self.state = nxtState
                 self.isEnd()
-                return nxtState, self.giveReward(), self.isTerminal
+                # return nxtState, self.giveReward(), self.isTerminal
                 
             #Else you didn't end up in right place
             else: 
@@ -281,7 +281,7 @@ cdef class Env:
                     #Update Values 
                     self.state = nxtState1
                     self.isEnd()
-                    return nxtState1, self.giveReward(), self.isTerminal
+                    # return nxtState1, self.giveReward(), self.isTerminal
                 
                 #If alternate possibility is not valid, then you stay in place
                 else: 
@@ -289,17 +289,17 @@ cdef class Env:
                     print(self.state)
                     print("Stayed in Place!")
                     self.isEnd()
-                    return self.state, self.giveReward(), self.isTerminal
+                    # return self.state, self.giveReward(), self.isTerminal
         else: 
              #Stay in place 
                     print(self.state)
                     print("Invalid action picked, Stayed in Place!")
                     self.isEnd()
-                    return self.state, self.giveReward(), self.isTerminal
+                    # return self.state, self.giveReward(), self.isTerminal
                     
                     
     #Get a list of possible actions that can be conducted at current state
-    cdef list action_space(self):
+    cdef list actionspace(self):
         cdef list actions_allowed = []
         if self.state == WIN_STATE or self.state == LOSE_STATE: 
             return actions_allowed
@@ -327,7 +327,7 @@ cdef class Env:
     
     
     #Function to print out the current board
-    cdef void showBoard(self):
+    cpdef void showBoard(self):
         cdef int i, j
         
         cdef temp1 = self.state[0] 

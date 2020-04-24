@@ -7,7 +7,7 @@ Created on Fri Apr 24 02:35:52 2020
 import random 
 cdef unsigned long long NEWREWARD = 100000000000000
 
-cdef class StateNode: 
+cdef class StateNode(): 
     
     #Attributes 
     cdef (int, int) state 
@@ -25,7 +25,7 @@ cdef class StateNode:
     cdef void SetRoot(self) 
     cdef bint IsRoot(self)
     cdef int GetParentAction(self) 
-    cdef (int, int) GetState(self) 
+    cpdef (int, int) GetState(self) 
     cdef bint IsAction(self) 
     cdef bint IsState(self) 
     cdef ActionNode GetParent(self) 
@@ -43,7 +43,7 @@ cdef class StateNode:
     cdef bint IsLeaf(self)
     
     
-cdef class ActionNode: 
+cdef class ActionNode(): 
     
     #Attributes
     cdef int action 
@@ -54,11 +54,11 @@ cdef class ActionNode:
   
     #Functions 
     cdef bint IsAction(self) 
-    cdef int GetAction(self) 
+    cpdef int GetAction(self) 
     cdef bint IsState(self) 
     cdef StateNode GetParent(self) 
     cdef list GetChildren(self)
-    cdef StateNode InChildren(self, (int, int) state)
+    # cdef StateNode InChildren(self, (int, int) state)
     cdef void AddChild(self, StateNode node) 
     cdef void IncVistCount(self) 
     cdef int GetVisitCount(self) 

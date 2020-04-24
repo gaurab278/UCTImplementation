@@ -8,7 +8,7 @@ Defines a node structure
 import random 
 cdef unsigned long long NEWREWARD = 100000000000000
 
-cdef class StateNode: 
+cdef class StateNode(): 
     
     def __init__ (self, (int, int) state, int Action_Taken, list action_space, ActionNode parent = None, bint isTerminal = False): 
         # print(action_space)
@@ -45,7 +45,7 @@ cdef class StateNode:
     
     
     #Funtion to get the state of current node 
-    cdef (int, int) GetState(self): 
+    cpdef (int, int) GetState(self): 
         return self.state 
     
     #Function to check if the node is action node 
@@ -122,7 +122,7 @@ cdef class StateNode:
         
         
         
-cdef class ActionNode: 
+cdef class ActionNode(): 
     
     def __init__ (self, int action, StateNode parent = None): 
          
@@ -145,7 +145,7 @@ cdef class ActionNode:
     cdef bint IsAction(self): 
         return True 
     
-    cdef int GetAction(self): 
+    cpdef int GetAction(self): 
         return self.action 
     
     #Function to check if the node is state node
@@ -160,10 +160,7 @@ cdef class ActionNode:
     cdef list GetChildren(self): 
         return self.children 
      
-    cdef StateNode InChildren(self, (int, int) state): 
-        cdef StateNode child 
-        cdef (int, int) stt 
-        
+    def InChildren(self, state): 
         for child in self.children: 
             stt = child.GetState() 
             if stt == state: 
