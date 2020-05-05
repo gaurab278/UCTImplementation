@@ -22,7 +22,7 @@ setup(
         [
             "*.pyx",
         ],
-        annotate=False,
+        annotate= True,
         compiler_directives={'language_level': "3"}),
     include_dirs=[numpy.get_include()]
 )
